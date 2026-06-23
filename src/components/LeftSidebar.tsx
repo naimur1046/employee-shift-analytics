@@ -4,7 +4,7 @@ import analysisIcon from '../assets/icons/analysis.png';
 import breakdownStreaksIcon from '../assets/icons/breakdownStreaks.png';
 import dashboardIcon from '../assets/icons/dashboard.png';
 import dataManagementIcon from '../assets/icons/dataManagement.png';
-import insightsIcon from '../assets/icons/user.png';
+import insightsIcon from '../assets/icons/insight.png';
 import visualizationsIcon from '../assets/icons/visualizations.png';
 
 const LeftSidebar: React.FC = () => {
