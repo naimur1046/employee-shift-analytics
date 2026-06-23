@@ -89,10 +89,10 @@ const Analysis: React.FC = () => {
   const visibleRecords = filteredRecords.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900">
+    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900 text-base">
       <header className="mb-6 flex min-h-[70px] flex-col justify-center gap-2">
-        <h1 className="text-3xl font-bold">Analysis</h1>
-        <p className="mt-1 max-w-4xl text-base text-slate-600">
+        <h1 className="text-4xl font-bold">Analysis</h1>
+        <p className="mt-1 max-w-4xl text-lg text-slate-600">
           Review the cleaned dataset before continuing with downstream operational analysis.
         </p>
       </header>
@@ -104,8 +104,8 @@ const Analysis: React.FC = () => {
               <img src={previewTableIcon} className="h-6 w-6" alt="Table preview" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Preview Table</h2>
-              <p className="text-sm text-slate-500">Review the dataset before continuing.</p>
+              <h2 className="text-2xl font-semibold">Preview Table</h2>
+              <p className="text-base text-slate-500">Review the dataset before continuing.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -116,7 +116,7 @@ const Analysis: React.FC = () => {
                 setPage(1);
               }}
               placeholder="Search records"
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
             <input
               type="date"
@@ -125,7 +125,7 @@ const Analysis: React.FC = () => {
                 setDateSearch(event.target.value);
                 setPage(1);
               }}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700"
             />
             <select
               value={hoursRange}
@@ -133,7 +133,7 @@ const Analysis: React.FC = () => {
                 setHoursRange(event.target.value);
                 setPage(1);
               }}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Hours</option>
               <option value="< 2">&lt; 2</option>
@@ -148,7 +148,7 @@ const Analysis: React.FC = () => {
                 setSelectedReason(event.target.value);
                 setPage(1);
               }}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Reasons</option>
               {reasonOptions.map((reason) => (
@@ -163,7 +163,7 @@ const Analysis: React.FC = () => {
                 setSelectedStatus(event.target.value as DataManagementValidationStatus | 'all');
                 setPage(1);
               }}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-base outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="all">All Statuses</option>
               {statusOptions.map((status) => (
@@ -176,7 +176,7 @@ const Analysis: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[760px] text-left text-base">
             <thead className="bg-slate-100 text-slate-600">
               <tr>
                 {sortColumns.map(([key, label]) => (
@@ -207,7 +207,7 @@ const Analysis: React.FC = () => {
                     <td className="px-4 py-3">{record.duration} hrs</td>
                     <td className="px-4 py-3">{record.reason}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${DATA_MANAGEMENT_STATUS_STYLES[record.status]}`}>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ring-1 ${DATA_MANAGEMENT_STATUS_STYLES[record.status]}`}>
                         {record.status}
                       </span>
                     </td>
@@ -225,7 +225,7 @@ const Analysis: React.FC = () => {
         </div>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">
+          <p className="text-base text-slate-500">
             Page {page} of {pageCount} {isCleaned ? '(Cleaned)' : '(Raw)'}
           </p>
           <div className="flex gap-2">
@@ -233,7 +233,7 @@ const Analysis: React.FC = () => {
               type="button"
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={page === 1}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-base font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
             >
               Previous
             </button>
@@ -241,7 +241,7 @@ const Analysis: React.FC = () => {
               type="button"
               onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
               disabled={page === pageCount}
-              className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-base font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
             >
               Next
             </button>

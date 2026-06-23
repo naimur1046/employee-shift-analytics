@@ -115,10 +115,10 @@ const DataManagement: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900">
+    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900 text-base">
       <header className="mb-6 flex min-h-[70px] flex-col justify-center">
-        <h1 className="text-3xl font-bold">Data Management</h1>
-        <p className="mt-2 text-base text-slate-600">Upload, validate, and prepare employee shift data for analysis.</p>
+        <h1 className="text-4xl font-bold">Data Management</h1>
+        <p className="mt-2 text-lg text-slate-600">Upload, validate, and prepare employee shift data for analysis.</p>
       </header>
 
       <section className="mb-6 grid gap-6 xl:grid-cols-[1.35fr_1fr]">
@@ -141,18 +141,18 @@ const DataManagement: React.FC = () => {
               <img src={validationShieldIcon} className="h-6 w-6" alt="Data Validation Report" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Data Validation Report</h2>
-              <p className="text-sm text-slate-500">Automatically detect operational inconsistencies.</p>
+              <h2 className="text-2xl font-semibold">Data Validation Report</h2>
+              <p className="text-base text-slate-500">Automatically detect operational inconsistencies.</p>
             </div>
           </div>
           <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <div className="grid grid-cols-[1fr_1.5fr_.6fr] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
+            <div className="grid grid-cols-[1fr_1.5fr_.6fr] bg-slate-100 px-4 py-3 text-base font-semibold text-slate-600">
               <span>Status</span><span>Issue Type</span><span className="text-right">Count</span>
             </div>
             {validationIssues.map((issue) => (
-              <div key={issue.key} className="grid grid-cols-[1fr_1.5fr_.6fr] items-center border-t border-slate-100 px-4 py-3 text-sm">
+              <div key={issue.key} className="grid grid-cols-[1fr_1.5fr_.6fr] items-center border-t border-slate-100 px-4 py-3 text-base">
                 <span>
-                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusStyles[issue.status]}`}>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ring-1 ${statusStyles[issue.status]}`}>
                     {issue.status}
                   </span>
                 </span>
@@ -171,15 +171,15 @@ const DataManagement: React.FC = () => {
               <img src={cleaningSparklesIcon} className="h-6 w-6" alt="Data Cleaning Center" />
             </span>
             <div>
-              <h2 className="text-xl font-semibold">Data Cleaning Center</h2>
-              <p className="text-sm text-slate-500">Automate cleaning and track what changed.</p>
+              <h2 className="text-2xl font-semibold">Data Cleaning Center</h2>
+              <p className="text-base text-slate-500">Automate cleaning and track what changed.</p>
             </div>
           </div>
           <div className="space-y-3">
             {DATA_MANAGEMENT_CLEANING_RULES.map((rule) => (
               <div key={rule.key} className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3">
                 <span className="font-semibold text-slate-800">{rule.label}</span>
-                <span className="text-sm text-slate-500">{rule.action}</span>
+                <span className="text-base text-slate-500">{rule.action}</span>
               </div>
             ))}
           </div>
@@ -188,7 +188,7 @@ const DataManagement: React.FC = () => {
               type="button"
               onClick={() => dispatch(setIsCleaned(true))}
               disabled={records.length === 0}
-              className="h-11 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+              className="h-11 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
               Auto Clean Dataset
             </button>
@@ -197,8 +197,8 @@ const DataManagement: React.FC = () => {
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Cleaning Summary</h2>
-            <p className="text-sm text-slate-500 mt-1">Review the quality improvements and cleaned records statistics.</p>
+            <h2 className="text-2xl font-semibold">Cleaning Summary</h2>
+            <p className="text-base text-slate-500 mt-1">Review the quality improvements and cleaned records statistics.</p>
             <div className="mt-5 grid gap-4 grid-cols-2 lg:grid-cols-3">
               <SummaryCard label="Before Cleaning" value={records.length > 0 ? totalRecords.toLocaleString() : '-'} tone="slate" />
               <SummaryCard label="After Cleaning" value={records.length > 0 ? recordsAfterCleaning.toLocaleString() : '-'} tone="emerald" />
