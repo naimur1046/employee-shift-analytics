@@ -18,7 +18,7 @@ const LeftSidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="group min-h-screen w-20 overflow-hidden bg-[#111827] px-3 py-6 text-[#F3F4F6] transition-all duration-300 ease-in-out hover:w-72">
+    <aside className="group sticky top-0 h-screen w-20 overflow-hidden bg-[#111827] px-3 py-6 text-[#F3F4F6] transition-all duration-300 ease-in-out hover:w-72">
       <nav aria-label="Main navigation">
         <ul className="space-y-2">
           {menuItems.map((item) => (
