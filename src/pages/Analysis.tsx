@@ -23,7 +23,7 @@ const sortColumns: Array<[SortKey, string]> = [
 ];
 
 const normalizeRecordText = (value: string) => value.toLowerCase();
-const normalizeReason = (reason: string) => reason.trim() || 'Unknown';
+const normalizeReason = (reason: string) => reason.trim();
 const statusOptions = Object.values(DataManagementValidationStatus);
 
 const Analysis: React.FC = () => {
@@ -31,6 +31,8 @@ const Analysis: React.FC = () => {
   const isCleaned = useAppSelector(selectShiftIsCleaned);
 
   const [search, setSearch] = useState('');
+  const [dateSearch, setDateSearch] = useState('');
+  const [hoursRange, setHoursRange] = useState('all');
   const [sortKey, setSortKey] = useState<SortKey>(DataManagementSortKey.Date);
   const [page, setPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<DataManagementValidationStatus | 'all'>('all');
@@ -52,12 +54,37 @@ const Analysis: React.FC = () => {
         const reason = normalizeReason(record.reason);
         const matchesReason = selectedReason === 'all' || reason === selectedReason;
         const matchesStatus = selectedStatus === 'all' || record.status === selectedStatus;
-        return matchesSearch && matchesReason && matchesStatus;
+        let matchesDate = true;
+        if (dateSearch) {
+          const parts = dateSearch.split('-');
+          if (parts.length === 3) {
+            const formattedSearch = `${parts[1]}/${parts[2]}/${parts[0]}`;
+            matchesDate = record.date === formattedSearch;
+          }
+        }
+
+        let matchesHours = true;
+        if (hoursRange !== 'all') {
+          const duration = record.duration;
+          if (hoursRange === '< 2') {
+            matchesHours = duration < 2;
+          } else if (hoursRange === '2-4') {
+            matchesHours = duration >= 2 && duration <= 4;
+          } else if (hoursRange === '4-6') {
+            matchesHours = duration >= 4 && duration <= 6;
+          } else if (hoursRange === '6-8') {
+            matchesHours = duration >= 6 && duration <= 8;
+          } else if (hoursRange === '> 8') {
+            matchesHours = duration > 8;
+          }
+        }
+
+        return matchesSearch && matchesReason && matchesStatus && matchesDate && matchesHours;
       })
       .sort((a, b) => String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, { numeric: true }));
-  }, [records, search, selectedReason, selectedStatus, sortKey]);
+  }, [records, search, selectedReason, selectedStatus, dateSearch, hoursRange, sortKey]);
 
-  const rowsPerPage = 5;
+  const rowsPerPage = 10;
   const pageCount = Math.max(1, Math.ceil(filteredRecords.length / rowsPerPage));
   const visibleRecords = filteredRecords.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
@@ -91,6 +118,30 @@ const Analysis: React.FC = () => {
               placeholder="Search records"
               className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+            <input
+              type="date"
+              value={dateSearch}
+              onChange={(event) => {
+                setDateSearch(event.target.value);
+                setPage(1);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-700"
+            />
+            <select
+              value={hoursRange}
+              onChange={(event) => {
+                setHoursRange(event.target.value);
+                setPage(1);
+              }}
+              className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="all">All Hours</option>
+              <option value="< 2">&lt; 2</option>
+              <option value="2-4">2-4</option>
+              <option value="4-6">4-6</option>
+              <option value="6-8">6-8</option>
+              <option value="> 8">&gt; 8</option>
+            </select>
             <select
               value={selectedReason}
               onChange={(event) => {

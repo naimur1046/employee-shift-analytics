@@ -1,4 +1,3 @@
-import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import {
   DataManagementValidationStatus,
