@@ -11,7 +11,7 @@ import {
 import { mainReducer } from "./reducer";
 
 export const store = configureStore({
-  reducer: mainReducer as any,
+  reducer: mainReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
