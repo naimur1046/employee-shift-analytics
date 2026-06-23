@@ -4,7 +4,7 @@ import LeftSidebar from './components/LeftSidebar'
 import Analysis from './pages/Analysis'
 import BreakdownStreak from './pages/BreakdownStreak'
 import Dashboard from './pages/Dashboard'
-import DataManagement from './pages/DataManagement'
+import DataManagement from './pages/data-management/DataManagement'
 import Insight from './pages/Insight'
 import Visualization from './pages/Visualization'
 
