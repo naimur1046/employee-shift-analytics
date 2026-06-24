@@ -8,9 +8,8 @@ import {
   selectShiftRawRecords,
 } from '../store/selectors/shiftSelectors';
 import type { DataManagementPreviewRecord } from '../constants/data-management';
-import { parseDateValue } from '../helpers/dataManagementFileHelpers';
-
-type Aggregation = 'daily' | 'weekly' | 'monthly';
+import { parseDateValue, parseShiftTimeToMinutes } from '../helpers/dataManagementFileHelpers';
+import { Aggregation } from '../constants/visualization';
 
 type TimelineRow = {
   key: string;
@@ -33,10 +32,24 @@ const chartPalette = [
   '#64748b',
 ];
 
-const distributionOrder = ['Breakdown', 'Power Failure', 'Maintenance', 'Other', 'Unknown Failure'];
-
 const formatHours = (hours: number) =>
   `${hours.toLocaleString(undefined, { maximumFractionDigits: 1 })} hrs`;
+
+const yAxisTicks = [
+  { hour: 0, label: '12am' },
+  { hour: 3, label: '3am' },
+  { hour: 6, label: '6am' },
+  { hour: 9, label: '9am' },
+  { hour: 12, label: '12pm' },
+  { hour: 15, label: '3pm' },
+  { hour: 18, label: '6pm' },
+  { hour: 21, label: '9pm' },
+  { hour: 24, label: 'next 12am' },
+  { hour: 27, label: 'next 3am' },
+  { hour: 30, label: 'next 6am' },
+  { hour: 33, label: 'next 9am' },
+  { hour: 36, label: 'next 12pm' },
+];
 
 const parseRecordDate = (record: DataManagementPreviewRecord) => {
   return parseDateValue(record.date);
@@ -53,11 +66,11 @@ const getWeekStart = (date: Date) => {
 };
 
 const getPeriodKey = (date: Date, aggregation: Aggregation) => {
-  if (aggregation === 'monthly') {
+  if (aggregation === Aggregation.Monthly) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
 
-  if (aggregation === 'weekly') {
+  if (aggregation === Aggregation.Weekly) {
     return toDateInputValue(getWeekStart(date));
   }
 
@@ -66,10 +79,10 @@ const getPeriodKey = (date: Date, aggregation: Aggregation) => {
 
 const getPeriodLabel = (key: string, aggregation: Aggregation) => {
   const date = new Date(key);
-  if (aggregation === 'monthly') {
+  if (aggregation === Aggregation.Monthly) {
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   }
-  if (aggregation === 'weekly') {
+  if (aggregation === Aggregation.Weekly) {
     return `Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -86,15 +99,6 @@ const isIssueReason = (reason: string) => {
     normalized.includes('repair') ||
     normalized.includes('issue')
   );
-};
-
-const getTimeWindow = (shiftStart: string) => {
-  const hour = Number.parseInt(shiftStart.split(':')[0], 10);
-  if (Number.isNaN(hour)) return 'Unknown';
-  if (hour >= 5 && hour < 12) return 'Morning';
-  if (hour >= 12 && hour < 17) return 'Afternoon';
-  if (hour >= 17 && hour < 22) return 'Evening';
-  return 'Night';
 };
 
 const buildArcPath = (cx: number, cy: number, radius: number, startPercent: number, endPercent: number) => {
@@ -122,10 +126,17 @@ const Visualization: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedReason, setSelectedReason] = useState('all');
-  const [aggregation, setAggregation] = useState<Aggregation>('daily');
+  const [aggregation, setAggregation] = useState<Aggregation>(Aggregation.Daily);
 
   const reasonOptions = useMemo(() => {
     return Array.from(new Set(records.map((record) => normalizeReason(record.reason)))).sort((a, b) => a.localeCompare(b));
+  }, [records]);
+
+  const distributionOrder = useMemo(() => {
+    const unique = Array.from(new Set(records.map((record) => normalizeReason(record.reason))))
+      .filter((reason) => reason && reason !== 'Unknown')
+      .sort((a, b) => a.localeCompare(b));
+    return unique.length > 0 ? [...unique, 'Other'] : ['Breakdown', 'Power Failure', 'Maintenance', 'Other', 'Unknown Failure'];
   }, [records]);
 
   const filteredRecords = useMemo(() => {
@@ -179,7 +190,6 @@ const Visualization: React.FC = () => {
     return Array.from(grouped.values()).sort((a, b) => a.key.localeCompare(b.key));
   }, [filteredRecords, aggregation]);
 
-  const maxTimelineTotal = Math.max(...timelineRows.map((row) => row.total), 1);
 
   const distributionData = useMemo(() => {
     const totals = distributionOrder.reduce<Record<string, number>>((acc, category) => {
@@ -221,7 +231,7 @@ const Visualization: React.FC = () => {
         },
       ];
     }, []);
-  }, [filteredRecords]);
+  }, [filteredRecords, distributionOrder]);
 
   const efficiencyRows = useMemo(() => {
     return timelineRows.map((row) => {
@@ -270,11 +280,11 @@ const Visualization: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900">
-      <header className="mb-5 flex min-h-[70px] flex-col justify-center gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900 text-base">
+      <header className="mb-6 flex min-h-[70px] flex-col justify-center gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Visualizations</h1>
-          <p className="mt-2 max-w-5xl text-base text-slate-600">
+          <h1 className="text-4xl font-bold">Visualizations</h1>
+          <p className="mt-1 max-w-5xl text-lg text-slate-600">
             Transform operational data into meaningful visual insights and discover trends, patterns, and recurring
             operational issues over time.
           </p>
@@ -339,9 +349,9 @@ const Visualization: React.FC = () => {
               onChange={(event) => setAggregation(event.target.value as Aggregation)}
               className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value={Aggregation.Daily}>Daily</option>
+              <option value={Aggregation.Weekly}>Weekly</option>
+              <option value={Aggregation.Monthly}>Monthly</option>
             </select>
           </label>
         </div>
@@ -354,44 +364,110 @@ const Visualization: React.FC = () => {
             <p className="mt-1 text-sm text-slate-500">Visualize all operational activities over time.</p>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <span key={category} className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <div className="mb-4 flex flex-wrap gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+             {categories.map((category) => (
+              <span key={category} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: categoryColors[category] }} />
                 {category}
               </span>
             ))}
           </div>
 
-          <div className="h-96 overflow-x-auto border-b border-slate-200">
-            <div className="flex h-full min-w-full items-end gap-3 px-1 pb-4">
-              {timelineRows.map((row) => (
-                <div key={row.key} className="flex h-full min-w-16 flex-1 flex-col justify-end gap-2">
-                  <div className="flex flex-1 items-end">
-                    <div
-                      className="flex w-full flex-col-reverse overflow-hidden rounded-t-lg bg-slate-100"
-                      style={{ height: `${Math.max(8, (row.total / maxTimelineTotal) * 100)}%` }}
-                      title={`${row.label}: ${formatHours(row.total)}`}
-                    >
-                      {categories.map((category) => {
-                        const hours = row.categories[category] || 0;
-                        if (hours <= 0) return null;
-                        return (
-                          <div
-                            key={category}
-                            style={{
-                              height: `${(hours / row.total) * 100}%`,
-                              backgroundColor: categoryColors[category],
-                            }}
-                            title={`${category}: ${formatHours(hours)}`}
-                          />
-                        );
-                      })}
+          <div className="flex rounded-xl border border-slate-200 bg-slate-50/30 p-4">
+            {/* Y-Axis Labels Column */}
+            <div className="relative mr-2 w-20 flex-shrink-0 text-right text-xs font-semibold text-slate-500" style={{ height: '396px' }}>
+              {yAxisTicks.map((t) => {
+                const topPct = (t.hour / 36) * 100;
+                return (
+                  <span
+                    key={`${t.hour}-${t.label}`}
+                    className="absolute right-0 -translate-y-1/2 select-none"
+                    style={{ top: `${topPct}%` }}
+                  >
+                    {t.label}
+                  </span>
+                );
+              })}
+            </div>
+
+            {/* Scrollable Grid Area */}
+            <div className="relative flex-1 overflow-x-auto">
+              <div className="flex min-w-[600px] gap-1" style={{ height: '446px' }}>
+                {timelineRows.map((row) => {
+                  // Get records for this day
+                  const dayRecords = filteredRecords.filter((record) => {
+                    const recordDate = parseRecordDate(record);
+                    if (!recordDate) return false;
+                    return getPeriodKey(recordDate, aggregation) === row.key;
+                  });
+
+                  const PILLAR_WIDTH = 40;
+                  const colWidth = Math.max(96, dayRecords.length * PILLAR_WIDTH);
+                  const totalPillarsWidth = dayRecords.length * PILLAR_WIDTH;
+                  const offsetLeft = Math.max(0, (colWidth - totalPillarsWidth) / 2);
+
+                  return (
+                    <div key={row.key} className="relative flex flex-col" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }}>
+                      {/* Grid Cell Area */}
+                      <div className="relative border-l border-r border-slate-200/50 bg-white" style={{ height: '396px' }}>
+                        {/* Draw Horizontal Grid Lines */}
+                        {Array.from({ length: 13 }).map((_, i) => {
+                          const hour = i * 3;
+                          const topPct = (hour / 36) * 100;
+                          return (
+                            <div
+                              key={hour}
+                              className="absolute left-0 right-0 border-t border-slate-100"
+                              style={{ top: `${topPct}%` }}
+                            />
+                          );
+                        })}
+
+                        {/* Render Pillars */}
+                        {dayRecords.map((record, index) => {
+                          const startMin = parseShiftTimeToMinutes(record.shiftStart);
+                          const endMin = parseShiftTimeToMinutes(record.shiftEnd);
+                          let startHour = startMin !== null ? startMin / 60 : 0;
+                          let endHour = endMin !== null ? endMin / 60 : startHour + (record.duration || 0);
+
+                          if (endMin !== null && startMin !== null && endMin < startMin) {
+                            endHour = (endMin + 1440) / 60;
+                          }
+
+                          const topPct = (startHour / 36) * 100;
+                          const heightPct = Math.max(2, ((endHour - startHour) / 36) * 100);
+                          const color = categoryColors[normalizeReason(record.reason)] || '#64748b';
+
+                          // Calculate horizontal position
+                          const leftPx = offsetLeft + index * PILLAR_WIDTH;
+
+                          return (
+                            <div
+                              key={`${record.date}-${record.shiftStart}-${index}`}
+                              className="absolute transition-all hover:scale-105 hover:z-20 cursor-pointer flex flex-col justify-between overflow-hidden text-[9px] font-bold text-white"
+                              style={{
+                                top: `${topPct}%`,
+                                height: `${heightPct}%`,
+                                left: `${leftPx}px`,
+                                width: `${PILLAR_WIDTH}px`,
+                                backgroundColor: color,
+                              }}
+                              title={`${normalizeReason(record.reason)}: ${record.shiftStart} - ${record.shiftEnd} (${formatHours(record.duration)})`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {/* Date Label (X-Axis) */}
+                      <div className="h-10 flex items-center justify-center mt-2">
+                        <span className="truncate text-center text-[11px] font-semibold text-slate-500">
+                          {row.label}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="truncate text-center text-[11px] font-semibold text-slate-500">{row.label}</span>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
