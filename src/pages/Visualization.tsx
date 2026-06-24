@@ -364,9 +364,9 @@ const Visualization: React.FC = () => {
             <p className="mt-1 text-sm text-slate-500">Visualize all operational activities over time.</p>
           </div>
 
-          <div className="mb-4 flex flex-wrap gap-3">
-            {categories.map((category) => (
-              <span key={category} className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+          <div className="mb-4 flex flex-wrap gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+             {categories.map((category) => (
+              <span key={category} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: categoryColors[category] }} />
                 {category}
               </span>
