@@ -8,7 +8,7 @@ import {
   selectShiftRawRecords,
 } from '../store/selectors/shiftSelectors';
 import type { DataManagementPreviewRecord } from '../constants/data-management';
-import { parseDateValue } from '../helpers/dataManagementFileHelpers';
+import { parseDateValue, parseShiftTimeToMinutes } from '../helpers/dataManagementFileHelpers';
 import { Aggregation } from '../constants/visualization';
 
 type TimelineRow = {
@@ -34,6 +34,22 @@ const chartPalette = [
 
 const formatHours = (hours: number) =>
   `${hours.toLocaleString(undefined, { maximumFractionDigits: 1 })} hrs`;
+
+const yAxisTicks = [
+  { hour: 0, label: '12am' },
+  { hour: 3, label: '3am' },
+  { hour: 6, label: '6am' },
+  { hour: 9, label: '9am' },
+  { hour: 12, label: '12pm' },
+  { hour: 15, label: '3pm' },
+  { hour: 18, label: '6pm' },
+  { hour: 21, label: '9pm' },
+  { hour: 24, label: 'next 12am' },
+  { hour: 27, label: 'next 3am' },
+  { hour: 30, label: 'next 6am' },
+  { hour: 33, label: 'next 9am' },
+  { hour: 36, label: 'next 12pm' },
+];
 
 const parseRecordDate = (record: DataManagementPreviewRecord) => {
   return parseDateValue(record.date);
@@ -174,7 +190,6 @@ const Visualization: React.FC = () => {
     return Array.from(grouped.values()).sort((a, b) => a.key.localeCompare(b.key));
   }, [filteredRecords, aggregation]);
 
-  const maxTimelineTotal = Math.max(...timelineRows.map((row) => row.total), 1);
 
   const distributionData = useMemo(() => {
     const totals = distributionOrder.reduce<Record<string, number>>((acc, category) => {
@@ -358,35 +373,101 @@ const Visualization: React.FC = () => {
             ))}
           </div>
 
-          <div className="h-96 overflow-x-auto border-b border-slate-200">
-            <div className="flex h-full min-w-full items-end gap-3 px-1 pb-4">
-              {timelineRows.map((row) => (
-                <div key={row.key} className="flex h-full min-w-16 flex-1 flex-col justify-end gap-2">
-                  <div className="flex flex-1 items-end">
-                    <div
-                      className="flex w-full flex-col-reverse overflow-hidden rounded-t-lg bg-slate-100"
-                      style={{ height: `${Math.max(8, (row.total / maxTimelineTotal) * 100)}%` }}
-                      title={`${row.label}: ${formatHours(row.total)}`}
-                    >
-                      {categories.map((category) => {
-                        const hours = row.categories[category] || 0;
-                        if (hours <= 0) return null;
-                        return (
-                          <div
-                            key={category}
-                            style={{
-                              height: `${(hours / row.total) * 100}%`,
-                              backgroundColor: categoryColors[category],
-                            }}
-                            title={`${category}: ${formatHours(hours)}`}
-                          />
-                        );
-                      })}
+          <div className="flex rounded-xl border border-slate-200 bg-slate-50/30 p-4">
+            {/* Y-Axis Labels Column */}
+            <div className="relative mr-2 w-20 flex-shrink-0 text-right text-xs font-semibold text-slate-500" style={{ height: '396px' }}>
+              {yAxisTicks.map((t) => {
+                const topPct = (t.hour / 36) * 100;
+                return (
+                  <span
+                    key={`${t.hour}-${t.label}`}
+                    className="absolute right-0 -translate-y-1/2 select-none"
+                    style={{ top: `${topPct}%` }}
+                  >
+                    {t.label}
+                  </span>
+                );
+              })}
+            </div>
+
+            {/* Scrollable Grid Area */}
+            <div className="relative flex-1 overflow-x-auto">
+              <div className="flex min-w-[600px] gap-1" style={{ height: '446px' }}>
+                {timelineRows.map((row) => {
+                  // Get records for this day
+                  const dayRecords = filteredRecords.filter((record) => {
+                    const recordDate = parseRecordDate(record);
+                    if (!recordDate) return false;
+                    return getPeriodKey(recordDate, aggregation) === row.key;
+                  });
+
+                  const PILLAR_WIDTH = 40;
+                  const colWidth = Math.max(96, dayRecords.length * PILLAR_WIDTH);
+                  const totalPillarsWidth = dayRecords.length * PILLAR_WIDTH;
+                  const offsetLeft = Math.max(0, (colWidth - totalPillarsWidth) / 2);
+
+                  return (
+                    <div key={row.key} className="relative flex flex-col" style={{ width: `${colWidth}px`, minWidth: `${colWidth}px` }}>
+                      {/* Grid Cell Area */}
+                      <div className="relative border-l border-r border-slate-200/50 bg-white" style={{ height: '396px' }}>
+                        {/* Draw Horizontal Grid Lines */}
+                        {Array.from({ length: 13 }).map((_, i) => {
+                          const hour = i * 3;
+                          const topPct = (hour / 36) * 100;
+                          return (
+                            <div
+                              key={hour}
+                              className="absolute left-0 right-0 border-t border-slate-100"
+                              style={{ top: `${topPct}%` }}
+                            />
+                          );
+                        })}
+
+                        {/* Render Pillars */}
+                        {dayRecords.map((record, index) => {
+                          const startMin = parseShiftTimeToMinutes(record.shiftStart);
+                          const endMin = parseShiftTimeToMinutes(record.shiftEnd);
+                          let startHour = startMin !== null ? startMin / 60 : 0;
+                          let endHour = endMin !== null ? endMin / 60 : startHour + (record.duration || 0);
+
+                          if (endMin !== null && startMin !== null && endMin < startMin) {
+                            endHour = (endMin + 1440) / 60;
+                          }
+
+                          const topPct = (startHour / 36) * 100;
+                          const heightPct = Math.max(2, ((endHour - startHour) / 36) * 100);
+                          const color = categoryColors[normalizeReason(record.reason)] || '#64748b';
+
+                          // Calculate horizontal position
+                          const leftPx = offsetLeft + index * PILLAR_WIDTH;
+
+                          return (
+                            <div
+                              key={`${record.date}-${record.shiftStart}-${index}`}
+                              className="absolute transition-all hover:scale-105 hover:z-20 cursor-pointer flex flex-col justify-between overflow-hidden text-[9px] font-bold text-white"
+                              style={{
+                                top: `${topPct}%`,
+                                height: `${heightPct}%`,
+                                left: `${leftPx}px`,
+                                width: `${PILLAR_WIDTH}px`,
+                                backgroundColor: color,
+                              }}
+                              title={`${normalizeReason(record.reason)}: ${record.shiftStart} - ${record.shiftEnd} (${formatHours(record.duration)})`}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {/* Date Label (X-Axis) */}
+                      <div className="h-10 flex items-center justify-center mt-2">
+                        <span className="truncate text-center text-[11px] font-semibold text-slate-500">
+                          {row.label}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="truncate text-center text-[11px] font-semibold text-slate-500">{row.label}</span>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
