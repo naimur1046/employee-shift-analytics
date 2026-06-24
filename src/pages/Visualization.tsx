@@ -9,8 +9,7 @@ import {
 } from '../store/selectors/shiftSelectors';
 import type { DataManagementPreviewRecord } from '../constants/data-management';
 import { parseDateValue } from '../helpers/dataManagementFileHelpers';
-
-type Aggregation = 'daily' | 'weekly' | 'monthly';
+import { Aggregation } from '../constants/visualization';
 
 type TimelineRow = {
   key: string;
@@ -33,8 +32,6 @@ const chartPalette = [
   '#64748b',
 ];
 
-const distributionOrder = ['Breakdown', 'Power Failure', 'Maintenance', 'Other', 'Unknown Failure'];
-
 const formatHours = (hours: number) =>
   `${hours.toLocaleString(undefined, { maximumFractionDigits: 1 })} hrs`;
 
@@ -53,11 +50,11 @@ const getWeekStart = (date: Date) => {
 };
 
 const getPeriodKey = (date: Date, aggregation: Aggregation) => {
-  if (aggregation === 'monthly') {
+  if (aggregation === Aggregation.Monthly) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
 
-  if (aggregation === 'weekly') {
+  if (aggregation === Aggregation.Weekly) {
     return toDateInputValue(getWeekStart(date));
   }
 
@@ -66,10 +63,10 @@ const getPeriodKey = (date: Date, aggregation: Aggregation) => {
 
 const getPeriodLabel = (key: string, aggregation: Aggregation) => {
   const date = new Date(key);
-  if (aggregation === 'monthly') {
+  if (aggregation === Aggregation.Monthly) {
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   }
-  if (aggregation === 'weekly') {
+  if (aggregation === Aggregation.Weekly) {
     return `Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -86,15 +83,6 @@ const isIssueReason = (reason: string) => {
     normalized.includes('repair') ||
     normalized.includes('issue')
   );
-};
-
-const getTimeWindow = (shiftStart: string) => {
-  const hour = Number.parseInt(shiftStart.split(':')[0], 10);
-  if (Number.isNaN(hour)) return 'Unknown';
-  if (hour >= 5 && hour < 12) return 'Morning';
-  if (hour >= 12 && hour < 17) return 'Afternoon';
-  if (hour >= 17 && hour < 22) return 'Evening';
-  return 'Night';
 };
 
 const buildArcPath = (cx: number, cy: number, radius: number, startPercent: number, endPercent: number) => {
@@ -122,10 +110,17 @@ const Visualization: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedReason, setSelectedReason] = useState('all');
-  const [aggregation, setAggregation] = useState<Aggregation>('daily');
+  const [aggregation, setAggregation] = useState<Aggregation>(Aggregation.Daily);
 
   const reasonOptions = useMemo(() => {
     return Array.from(new Set(records.map((record) => normalizeReason(record.reason)))).sort((a, b) => a.localeCompare(b));
+  }, [records]);
+
+  const distributionOrder = useMemo(() => {
+    const unique = Array.from(new Set(records.map((record) => normalizeReason(record.reason))))
+      .filter((reason) => reason && reason !== 'Unknown')
+      .sort((a, b) => a.localeCompare(b));
+    return unique.length > 0 ? [...unique, 'Other'] : ['Breakdown', 'Power Failure', 'Maintenance', 'Other', 'Unknown Failure'];
   }, [records]);
 
   const filteredRecords = useMemo(() => {
@@ -221,7 +216,7 @@ const Visualization: React.FC = () => {
         },
       ];
     }, []);
-  }, [filteredRecords]);
+  }, [filteredRecords, distributionOrder]);
 
   const efficiencyRows = useMemo(() => {
     return timelineRows.map((row) => {
@@ -339,9 +334,9 @@ const Visualization: React.FC = () => {
               onChange={(event) => setAggregation(event.target.value as Aggregation)}
               className="mt-1 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
+              <option value={Aggregation.Daily}>Daily</option>
+              <option value={Aggregation.Weekly}>Weekly</option>
+              <option value={Aggregation.Monthly}>Monthly</option>
             </select>
           </label>
         </div>
