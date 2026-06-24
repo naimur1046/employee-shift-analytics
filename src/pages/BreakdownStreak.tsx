@@ -22,10 +22,9 @@ const isIssueReason = (reason: string) => {
   const normalized = reason.toLowerCase();
   return (
     normalized.includes('breakdown') ||
-    normalized.includes('failure') ||
-    normalized.includes('maintenance') ||
-    normalized.includes('repair') ||
-    normalized.includes('issue')
+    normalized.includes('power failure') ||
+    normalized.includes('unknown failure') ||
+    normalized.includes('machine jam')
   );
 };
 
