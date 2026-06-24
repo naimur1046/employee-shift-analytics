@@ -265,11 +265,11 @@ const Visualization: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900">
-      <header className="mb-5 flex min-h-[70px] flex-col justify-center gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen w-full bg-slate-50 px-6 py-6 text-slate-900 text-base">
+      <header className="mb-6 flex min-h-[70px] flex-col justify-center gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Visualizations</h1>
-          <p className="mt-2 max-w-5xl text-base text-slate-600">
+          <h1 className="text-4xl font-bold">Visualizations</h1>
+          <p className="mt-1 max-w-5xl text-lg text-slate-600">
             Transform operational data into meaningful visual insights and discover trends, patterns, and recurring
             operational issues over time.
           </p>
